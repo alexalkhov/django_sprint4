@@ -31,10 +31,10 @@ class IndexListView(ListMixin):
             is_published=True,
             pub_date__lt=now,
             category__is_published=True
-            )
+        )
             .order_by('-pub_date')
             .annotate(comment_count=Count('comment'))
-            )
+        )
         return post_list
 
 
@@ -52,7 +52,7 @@ class CategoryPostsView(ListMixin):
             category=self.category,
             pub_date__lt=now,
             is_published=True
-            ).annotate(comment_count=Count('comment'))
+        ).annotate(comment_count=Count('comment'))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
