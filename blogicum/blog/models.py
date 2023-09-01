@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -56,6 +57,24 @@ class Location(BaseModel):
         return self.name
 
 
+class PostQuerySet(models.QuerySet):
+    def published(self):
+        now = timezone.now()
+        return self.filter(
+            is_published=True,
+            pub_date__lt=now,
+            category__is_published=True
+            )
+
+
+class PostManager(models.Manager):
+    def get_queryset(self):
+        return PostQuerySet(
+            self.model,
+            using=self._db
+            ).published()
+
+
 class Post(BaseModel):
     title = models.CharField(
         'Заголовок',
@@ -72,13 +91,13 @@ class Post(BaseModel):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='author',
+        related_name='posts',
         verbose_name='Автор публикации'
     )
     location = models.ForeignKey(
         Location,
         on_delete=models.SET_NULL,
-        related_name='location',
+        related_name='posts',
         null=True,
         verbose_name='Местоположение'
     )
@@ -90,6 +109,9 @@ class Post(BaseModel):
         blank=False,
         verbose_name='Категория'
     )
+
+    objects = PostQuerySet.as_manager()
+    published = PostManager()
 
     class Meta:
         verbose_name = 'публикация'
@@ -113,7 +135,7 @@ class Comment(models.Model):
     )
 
     class Meta:
-        verbose_name = "комментарий"
-        verbose_name_plural = "Комментарии"
-        default_related_name = "comments"
-        ordering = ("created_at",)
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'Комментарии'
+        default_related_name = 'comments'
+        ordering = ('created_at',)
