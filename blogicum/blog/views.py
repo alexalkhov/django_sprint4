@@ -48,7 +48,7 @@ class CategoryPostsView(ListMixin):
             .posts(manager='objects')
             .published()
             .order_by('-pub_date')
-            ).annotate(comment_count=Count('comment'))
+        ).annotate(comment_count=Count('comment'))
         return self.post_list
 
     def get_context_data(self, **kwargs):
