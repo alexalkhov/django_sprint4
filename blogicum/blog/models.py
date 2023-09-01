@@ -64,7 +64,7 @@ class PostQuerySet(models.QuerySet):
             is_published=True,
             pub_date__lt=now,
             category__is_published=True
-            )
+        )
 
 
 class PostManager(models.Manager):
@@ -72,7 +72,7 @@ class PostManager(models.Manager):
         return PostQuerySet(
             self.model,
             using=self._db
-            ).published()
+        ).published()
 
 
 class Post(BaseModel):
