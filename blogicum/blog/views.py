@@ -1,7 +1,9 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
@@ -9,9 +11,6 @@ from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
 
 from .forms import CommentForm, PostForm, ProfileUpdateForm
 from .models import Category, Comment, Post
-from django.core.exceptions import PermissionDenied
-from django.http import Http404
-
 
 User = get_user_model()
 
@@ -28,8 +27,8 @@ class IndexListView(ListMixin):
         post_list = (
             Post
             .published
+            .select_related('author', 'category', 'location')
             .order_by('-pub_date')
-            .annotate(comment_count=Count('comment'))
         )
         return post_list
 
@@ -45,10 +44,10 @@ class CategoryPostsView(ListMixin):
         )
         self.post_list = (
             self.category
-            .posts(manager='objects')
+            .posts
             .published()
             .order_by('-pub_date')
-        ).annotate(comment_count=Count('comment'))
+        )
         return self.post_list
 
     def get_context_data(self, **kwargs):
@@ -63,7 +62,7 @@ class PostDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         post = get_object_or_404(Post, pk=self.kwargs['pk'])
-        if (not post.is_published and (post.author != self.request.user)):
+        if not post.is_published and post.author != self.request.user:
             raise Http404
         return super().get_queryset()
 

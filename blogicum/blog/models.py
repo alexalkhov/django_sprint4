@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import Count
 from django.utils import timezone
 
 User = get_user_model()
@@ -66,13 +67,16 @@ class PostQuerySet(models.QuerySet):
             category__is_published=True
         )
 
+    def counter(self):
+        return self.annotate(comment_count=Count('comment'))
+
 
 class PostManager(models.Manager):
     def get_queryset(self):
         return PostQuerySet(
             self.model,
             using=self._db
-        ).published()
+        ).published().counter()
 
 
 class Post(BaseModel):
